@@ -64,23 +64,34 @@ export default function ShareActions({ blob, fileName, caption }: ShareActionsPr
     playClick();
     if (!blob) return;
 
+    // Open the tab SYNCHRONOUSLY while the user click gesture is active
+    const popup = window.open('', '_blank', 'noopener,noreferrer');
+
     const file = new File([blob], fileName, { type: 'image/png' });
 
     // Primary path on mobile browsers with native share
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], text: caption });
+        popup?.close();
         setNote(null);
         return;
       } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') return;
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          popup?.close();
+          return;
+        }
       }
     }
 
     // Direct redirect path to X intent composer
     if (!downloaded) download();
     const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}`;
-    window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+    if (popup) {
+      popup.location.href = tweetUrl;
+    } else {
+      window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+    }
     setNote('𝕏 Opening X! Caption pre-filled — attach the downloaded PNG pass.');
   };
 
@@ -88,15 +99,21 @@ export default function ShareActions({ blob, fileName, caption }: ShareActionsPr
     playClick();
     if (!blob) return;
 
+    const popup = window.open('', '_blank', 'noopener,noreferrer');
+
     const file = new File([blob], fileName, { type: 'image/png' });
 
     if (navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({ files: [file], text: caption, title: 'HHGoa 2026 Builder ID' });
+        popup?.close();
         setNote(null);
         return;
       } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') return;
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          popup?.close();
+          return;
+        }
       }
     }
 
@@ -113,7 +130,11 @@ export default function ShareActions({ blob, fileName, caption }: ShareActionsPr
     }
 
     const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(caption)}`;
-    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+    if (popup) {
+      popup.location.href = linkedInUrl;
+    } else {
+      window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+    }
     setNote('💼 Opening LinkedIn! Caption pre-filled — attach your downloaded pass PNG.');
   };
 
@@ -185,4 +206,3 @@ export default function ShareActions({ blob, fileName, caption }: ShareActionsPr
     </div>
   );
 }
-
