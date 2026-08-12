@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { playClick } from '../lib/soundEffects';
 
 interface ShareActionsProps {
   blob: Blob | null;
@@ -7,13 +8,15 @@ interface ShareActionsProps {
 }
 
 const btnBase =
-  'w-full font-body font-bold uppercase tracking-[0.14em] text-[12px] rounded-md px-5 py-3.5 transition-colors';
+  'w-full font-body font-bold uppercase tracking-[0.14em] text-[12px] rounded-md px-5 py-3.5 transition-all active:scale-[0.99]';
 
 export default function ShareActions({ blob, fileName, caption }: ShareActionsProps) {
   const [note, setNote] = useState<string | null>(null);
   const [downloaded, setDownloaded] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const download = () => {
+    playClick();
     if (!blob) return;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -28,12 +31,31 @@ export default function ShareActions({ blob, fileName, caption }: ShareActionsPr
     setNote(null);
   };
 
+  const copyImage = async () => {
+    playClick();
+    if (!blob) return;
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        const item = new ClipboardItem({ 'image/png': blob });
+        await navigator.clipboard.write([item]);
+        setCopied(true);
+        setNote('PNG image copied to clipboard! Ready to paste into X, Discord, or Telegram.');
+        setTimeout(() => setCopied(false), 3000);
+      } else {
+        setNote('Copy image is not supported on this browser — use Download instead.');
+      }
+    } catch {
+      setNote('Could not copy image automatically. Use Download PNG.');
+    }
+  };
+
   const openTweetIntent = () => {
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const shareToX = async () => {
+    playClick();
     if (!blob) return;
     const file = new File([blob], fileName, { type: 'image/png' });
 
@@ -63,19 +85,32 @@ export default function ShareActions({ blob, fileName, caption }: ShareActionsPr
         data-testid="download-btn"
         onClick={download}
         disabled={!blob}
-        className={`${btnBase} bg-brand-accent text-brand-primary hover:opacity-90 disabled:opacity-40`}
+        className={`${btnBase} bg-brand-accent text-brand-primary hover:opacity-90 disabled:opacity-40 shadow-sm`}
       >
         Download PNG
       </button>
-      <button
-        type="button"
-        data-testid="share-btn"
-        onClick={shareToX}
-        disabled={!blob}
-        className={`${btnBase} bg-brand-pink text-brand-white hover:opacity-90 disabled:opacity-40`}
-      >
-        Share to X
-      </button>
+
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          data-testid="share-btn"
+          onClick={shareToX}
+          disabled={!blob}
+          className={`${btnBase} bg-brand-pink text-brand-white hover:opacity-90 disabled:opacity-40 shadow-sm`}
+        >
+          Share to X
+        </button>
+
+        <button
+          type="button"
+          onClick={copyImage}
+          disabled={!blob}
+          className={`${btnBase} bg-brand-white/15 text-brand-offwhite hover:bg-brand-white/25 border border-brand-accent/30 disabled:opacity-40`}
+        >
+          {copied ? '✓ Copied!' : '📋 Copy PNG'}
+        </button>
+      </div>
+
       {note && (
         <p className="font-body text-brand-accent text-[11px] leading-snug text-center" role="status">
           {note}
@@ -84,3 +119,4 @@ export default function ShareActions({ blob, fileName, caption }: ShareActionsPr
     </div>
   );
 }
+
