@@ -64,78 +64,78 @@ export default function ShareActions({ blob, fileName, caption }: ShareActionsPr
     playClick();
     if (!blob) return;
 
-    // Open the tab SYNCHRONOUSLY while the user click gesture is active
-    const popup = window.open('', '_blank', 'noopener,noreferrer');
+    if (!downloaded) download();
 
     const file = new File([blob], fileName, { type: 'image/png' });
 
-    // Primary path on mobile browsers with native share
+    // Try Native OS Web Share API first (attaches image directly on supported browsers & mobile)
     if (navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], text: caption });
-        popup?.close();
-        setNote(null);
+        await navigator.share({ files: [file], text: caption, title: 'Hacker House Goa 2026 Builder Pass' });
+        setNote('⚡ Shared via native share sheet!');
         return;
       } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          popup?.close();
-          return;
-        }
+        if (err instanceof DOMException && err.name === 'AbortError') return;
       }
     }
 
-    // Direct redirect path to X intent composer
-    if (!downloaded) download();
-    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}`;
-    if (popup) {
-      popup.location.href = tweetUrl;
-    } else {
-      window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+    // Copy PNG image to clipboard for 1-click Ctrl+V paste on X
+    try {
+      if (navigator.clipboard && window.ClipboardItem) {
+        const item = new ClipboardItem({
+          'image/png': blob,
+          'text/plain': new Blob([caption], { type: 'text/plain' }),
+        });
+        await navigator.clipboard.write([item]);
+      }
+    } catch {
+      // Ignore clipboard errors
     }
-    setNote('𝕏 Opening X! Caption pre-filled — attach the downloaded PNG pass.');
+
+    // Direct web redirect to X tweet composer in a new tab
+    const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(caption)}`;
+    window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+    setNote('𝕏 X post composer opened! Pass PNG saved & copied to clipboard — press Ctrl+V or click 🖼️ to attach!');
   };
 
   const shareToLinkedIn = async () => {
     playClick();
     if (!blob) return;
 
-    const popup = window.open('', '_blank', 'noopener,noreferrer');
+    if (!downloaded) download();
 
     const file = new File([blob], fileName, { type: 'image/png' });
 
+    // Try Native OS Web Share API first (attaches image directly on supported browsers & mobile)
     if (navigator.canShare?.({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], text: caption, title: 'HHGoa 2026 Builder ID' });
-        popup?.close();
-        setNote(null);
+        await navigator.share({ files: [file], text: caption, title: 'Hacker House Goa 2026 Builder Pass' });
+        setNote('💼 Shared via native share sheet!');
         return;
       } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') {
-          popup?.close();
-          return;
-        }
+        if (err instanceof DOMException && err.name === 'AbortError') return;
       }
     }
 
-    // Direct redirect path to LinkedIn post composer
-    if (!downloaded) download();
-
-    // Copy caption text so user can easily paste into LinkedIn
+    // Copy PNG image & caption text to clipboard for 1-click Ctrl+V paste into LinkedIn draft box
     try {
-      if (navigator.clipboard) {
+      if (navigator.clipboard && window.ClipboardItem) {
+        const item = new ClipboardItem({
+          'image/png': blob,
+          'text/plain': new Blob([caption], { type: 'text/plain' }),
+        });
+        await navigator.clipboard.write([item]);
+      } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(caption);
       }
     } catch {
       // Ignore clipboard write failures
     }
 
-    const linkedInUrl = `https://www.linkedin.com/feed/?shareActive=true&text=${encodeURIComponent(caption)}`;
-    if (popup) {
-      popup.location.href = linkedInUrl;
-    } else {
-      window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
-    }
-    setNote('💼 Opening LinkedIn! Caption pre-filled — attach your downloaded pass PNG.');
+    // Exact LinkedIn "Start a post" draft modal URL
+    const linkedInUrl = 'https://www.linkedin.com/feed/?shareActive=true';
+    window.open(linkedInUrl, '_blank', 'noopener,noreferrer');
+    setNote('💼 LinkedIn post draft opened! Press Ctrl+V inside the draft box to paste your pass PNG & text!');
   };
 
   return (
@@ -196,6 +196,12 @@ export default function ShareActions({ blob, fileName, caption }: ShareActionsPr
           <span>{copied ? '✓' : '📋'}</span>
           <span>{copied ? 'Copied!' : 'Copy PNG'}</span>
         </button>
+      </div>
+
+      <div className="bg-brand-black/20 border border-brand-accent/15 rounded-md p-2.5 text-center">
+        <p className="font-body text-[10px] text-brand-offwhite/70 leading-relaxed">
+          💡 <span className="text-brand-accent font-semibold">Attach Image:</span> Clicking <span className="text-brand-white font-bold">Post to X</span> or <span className="text-brand-white font-bold">LinkedIn</span> downloads your pass PNG & copies it. Simply <span className="text-brand-pink font-bold">press Ctrl+V</span> (or click 🖼️) on X/LinkedIn to attach!
+        </p>
       </div>
 
       {note && (
