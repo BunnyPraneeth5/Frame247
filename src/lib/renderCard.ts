@@ -173,15 +173,31 @@ function drawStickersOnCanvas(
   isPFP = false,
 ): void {
   if (!stickers || stickers.length === 0) return;
-  const stickerData = STICKERS.filter((s) => stickers.slice(0, 2).includes(s.id));
-  stickerData.forEach((st, idx) => {
-    ctx.save();
-    const rot = idx % 2 === 0 ? -0.12 : 0.14;
-    const x = isPFP ? (idx === 0 ? 170 : 910) : (idx === 0 ? 170 : 910);
-    const y = isPFP ? (idx === 0 ? 760 : 770) : (idx === 0 ? 380 : 980);
 
-    ctx.translate(x, y);
-    ctx.rotate(rot);
+  const selectedStickers = stickers
+    .slice(0, 3)
+    .map((id) => STICKERS.find((s) => s.id === id))
+    .filter((s): s is (typeof STICKERS)[number] => !!s);
+
+  const cardPos = [
+    { x: 180, y: 370, rot: -0.12 },
+    { x: 900, y: 380, rot: 0.14 },
+    { x: 220, y: 990, rot: -0.09 },
+  ];
+
+  const pfpPos = [
+    { x: 180, y: 200, rot: -0.12 },
+    { x: 900, y: 210, rot: 0.14 },
+    { x: 880, y: 840, rot: -0.09 },
+  ];
+
+  selectedStickers.forEach((st, idx) => {
+    ctx.save();
+    const pos = isPFP ? pfpPos[idx] : cardPos[idx];
+    if (!pos) return;
+
+    ctx.translate(pos.x, pos.y);
+    ctx.rotate(pos.rot);
 
     ctx.font = `700 22px ${FONT_MONO}`;
     const textW = ctx.measureText(st.text).width;
@@ -190,22 +206,37 @@ function drawStickersOnCanvas(
     const boxH = 46;
 
     // Drop shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.beginPath();
-    ctx.roundRect(-boxW / 2 + 4, -boxH / 2 + 4, boxW, boxH, 10);
+    ctx.roundRect(-boxW / 2 + 5, -boxH / 2 + 5, boxW, boxH, 10);
     ctx.fill();
 
+    // Alternate sticker color styles for maximum visual punch
+    let bg = t.pink;
+    let border = t.accent;
+    let textCol = '#FFFFFF';
+
+    if (idx === 1) {
+      bg = t.accent;
+      border = t.pink;
+      textCol = t.primary;
+    } else if (idx === 2) {
+      bg = colors.black;
+      border = t.accent;
+      textCol = t.accent;
+    }
+
     // Sticker background
-    ctx.fillStyle = t.pink;
-    ctx.strokeStyle = t.accent;
-    ctx.lineWidth = 3;
+    ctx.fillStyle = bg;
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
     ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, 10);
     ctx.fill();
     ctx.stroke();
 
     // Text
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = textCol;
     ctx.textAlign = 'center';
     ctx.fillText(st.text, 0, 7);
     ctx.restore();

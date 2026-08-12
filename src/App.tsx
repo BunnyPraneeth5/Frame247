@@ -125,8 +125,8 @@ export default function App() {
       if (prev.includes(st)) {
         return prev.filter((s) => s !== st);
       }
-      if (prev.length >= 2) {
-        return [prev[1], st];
+      if (prev.length >= 3) {
+        return [...prev.slice(1), st];
       }
       return [...prev, st];
     });

@@ -16,7 +16,19 @@ interface BuilderFormProps {
   onStickerToggle: (st: string) => void;
 }
 
-const ROLE_SUGGESTIONS = ['Full-stack', 'Frontend', 'Backend', 'AI/ML', 'Design', 'Mobile', 'DevOps', 'Founder'];
+const ROLE_SUGGESTIONS = [
+  'Full-stack',
+  'Frontend',
+  'Backend',
+  'AI / LLM',
+  'Web3 / Crypto',
+  'Design',
+  'Mobile',
+  'DevOps',
+  'Cybersec',
+  'Vibe Coder',
+  'Solo Founder',
+];
 
 const inputClass =
   'w-full bg-brand-white/8 border border-brand-accent/35 rounded-md px-3.5 py-2.5 ' +
@@ -184,8 +196,13 @@ export default function BuilderForm({
 
       {/* Custom Stickers */}
       <div>
-        <span className={labelClass}>Stickers & Badges (Max 2)</span>
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className={labelClass + ' mb-0'}>Stickers & Badges (Max 3)</span>
+          <span className="font-mono text-[10px] text-brand-accent font-semibold">
+            {stickers.length}/3 selected
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1.5 border border-brand-accent/20 rounded-md bg-brand-black/20 custom-scrollbar">
           {STICKERS.map((st) => {
             const active = stickers.includes(st.id);
             return (
